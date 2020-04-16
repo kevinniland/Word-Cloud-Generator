@@ -1,0 +1,53 @@
+FUNCTION_BLOCK wcloud
+	VAR_INPUT				
+		title : REAL;
+		headings : REAL;
+		body : REAL;
+	END_VAR
+	
+	VAR_OUTPUT				
+		score : REAL;
+	END_VAR
+	
+	// Fuzzify input variable 'title': { 'insignificant', 'significant' }
+	FUZZIFY title	
+		TERM insignificant := (0, 1);	 
+		TERM significant := (1, 1);
+	END_FUZZIFY
+	
+	// Fuzzify input variable 'body': { 'infrequent', 'frequent' }
+	FUZZIFY headings			
+		TERM infrequent := (0, 1) (3, 0);
+		TERM frequent := (6, 0) (9, 1);
+	END_FUZZIFY
+	
+	// Fuzzify input variable 'headings': { 'irrelevant', 'relevant', 'prevalent' }
+	FUZZIFY body		
+		TERM irrelevant := (0, 1) (5, 0);
+		TERM relevant := (7, 0) (9, 1);
+		TERM prevalent := (11, 0) (13, 1);
+	END_FUZZIFY
+	
+	// Defzzzify output variable 'score' : {'low', 'average', 'high' }
+	DEFUZZIFY score			
+		TERM low := (0, 0) (3, 1) (6, 0);
+		TERM average := (9, 0) (12, 1) (15, 0);
+		TERM high := (18, 0) (21, 1) (24, 0);
+		
+		METHOD : COG;		// Use 'Center Of Gravity' defuzzification method
+		DEFAULT := 0;		// Default value is 0 (if no rule activates defuzzifier)
+	END_DEFUZZIFY
+	
+	RULEBLOCK No1
+		AND : MIN;	// Use 'MIN' for 'AND'
+		ACT : MIN;	// Use 'MIN' for activation method
+		ACCU : MAX;	// Use 'MAX' for accumulation method
+		
+		// Rules
+		RULE 1 : IF title IS insignificant OR headings IS infrequent OR body IS irrelevant THEN score IS low;
+		RULE 2 : IF headings IS frequent OR body IS prevalent THEN score IS average;
+		RULE 3 : IF title IS significant THEN score IS high;
+		RULE 4 : IF headings IS frequent AND body IS prevalent THEN score IS high;
+		RULE 5 : IF title IS significant AND headings IS frequent AND body IS prevalent THEN score IS high;
+	END_RULEBLOCK
+END_FUNCTION_BLOCK
